@@ -1,0 +1,15 @@
+{
+  "name": "droneboat-server",
+  "version": "1.0.0",
+  "description": "Server for drone boat",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "nodemon src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Jason Brinkle",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
