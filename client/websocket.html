@@ -73,10 +73,14 @@
       const output = document.getElementById('output');
       let ws = null;
 
+      const queryParams = new URL(window.location).search;
+      const clientId = queryParams.substr(4);
+
       connect.onclick = (e) => {
         try {
           ws = new WebSocket(wsUrl);
           ws.onopen = (openEvent) => {
+            ws.send(`iam ${clientId}`);
             createReceiveEntry('Connection established');
             connect.disabled = true;
             disconnect.disabled = false;
