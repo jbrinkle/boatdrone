@@ -46,8 +46,28 @@ class SocketConnectionManager {
     }
 
     handleOtherMessage(message) {
-        console.log(`[${this.id}] ${message}`);
-        this.mySocket.send('ACK');
+        const parts = /To\:(\w+) (.+)/.exec(message);
+        if (!parts) {
+            this.mySocket.send('Invalid Message');
+            return;
+        }
+
+        const to = parts[1];
+        const msg = parts[2];
+        console.log(`[${this.id} -> ${to}] ${msg}`);
+
+        const dest = ActiveConnections.find(c => c.Id === to);
+        if (!dest) {
+            this.mySocket.send('Destination not found');
+        } else {
+            dest.sendMessage(this.id, msg);
+            this.mySocket.send('ACK');
+        }
+    }
+
+    sendMessage(from, data) {
+        const msg = `From:${from} ${data}`;
+        this.mySocket.send(msg);
     }
 
     sendUnidentifiedClientAndShutdown() {

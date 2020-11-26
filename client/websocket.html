@@ -10,6 +10,9 @@
         font-size: 1.5em;
         box-sizing: border-box;
       }
+      h1 {
+        margin: 0;
+      }
       button {
         font-size: 1em;
       }
@@ -52,6 +55,7 @@
   </head>
   <body>
     <div class="centerstack">
+      <h1 id="clientId"></h1>
       <div class="ctrlPanel centerstack-item">
         <button id="connect">Connect</button>
         <button id="disconnect" disabled>Disconnect</button>
@@ -75,6 +79,9 @@
 
       const queryParams = new URL(window.location).search;
       const clientId = queryParams.substr(4);
+      window.addEventListener('DOMContentLoaded', () => {
+        document.getElementById('clientId').innerText = clientId;
+      }, false);
 
       connect.onclick = (e) => {
         try {
@@ -97,7 +104,7 @@
             console.log(closeEvent);
           }
           ws.onmessage = (messageEvent) => {
-            createReceiveEntry(`Received: ${messageEvent.data}`);
+            handleReceivedMesesage(messageEvent.data);
             console.log(messageEvent);
           }
         } catch (err) {
@@ -121,6 +128,10 @@
       }
 
       const recentReceived = [];
+      function handleReceivedMesesage(data) {
+        const parts = /From:(\w+) (.*)/.exec(data);
+        createReceiveEntry(`[${parts[1]}]: ${parts[2]}`);
+      }
       function createReceiveEntry(message) {
         const now = new Date();
         const nowStr = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
