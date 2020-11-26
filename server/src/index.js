@@ -9,10 +9,21 @@ app.get('/status', (req, res) => {
     res.send('OK');
 });
 
+let periodicHello = null;
 wss.on('connection', socket => {
+    periodicHello = setInterval(() => {
+        socket.send('Hi!');
+    }, 2500);
+    socket.on('close', (code, reason) => {
+        console.log(`    ${code} - ${reason}`);
+    });
     socket.on('message', message => {
         console.log(`Received from browser: ${message}`);
-        socket.send('ACK');
+        if (message === 'STOP') {
+            clearInterval(periodicHello);
+            socket.send('K. I\'ll stop saying hi')
+        }
+        else socket.send('ACK');
     });
 });
 

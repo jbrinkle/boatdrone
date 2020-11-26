@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebSocket test</title>
+    <style>
+      body {
+        background-color: #555;
+        color: #f2f2f2;
+        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        font-size: 1.5em;
+        box-sizing: border-box;
+      }
+      button {
+        font-size: 1em;
+      }
+      .centerstack {
+        width: calc(100% - 20px);
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 6px;
+        background-color: #777;
+        border: 1px solid #333;
+      }
+      .centerstack-item {
+        padding: 6px;
+        margin-bottom: 10px;
+        border: 1px solid #333;
+      }
+      .ctrlPanel {
+        background-color: #877;
+      }
+      .send {
+        background-color: #787;
+      }
+      .send > input {
+        display: block;
+        width: 100%;
+        font-size: 1em;
+        box-sizing: border-box;
+      }
+      .send > button {
+        margin-top: 6px;
+      }
+      .receive {
+        background-color: #779;
+      }
+      .timestamp {
+        font-size: .5em;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="centerstack">
+      <div class="ctrlPanel centerstack-item">
+        <button id="connect">Connect</button>
+        <button id="disconnect" disabled>Disconnect</button>
+      </div>
+      <div class="send centerstack-item">
+        <input id="message" type="text" placeholder="message" disabled/>
+        <button id="sendMsg" disabled>Send</button>
+      </div>
+      <div id="output" class="receive centerstack-item">
+        <!-- messages from server -->
+      </div>
+    </div>
+    <script>
+      const wsUrl = 'ws://localhost:3000';
+      const connect = document.getElementById('connect');
+      const disconnect = document.getElementById('disconnect');
+      const sendBtn = document.getElementById('sendMsg');
+      const messageTxt = document.getElementById('message');
+      const output = document.getElementById('output');
+      let ws = null;
+
+      connect.onclick = (e) => {
+        try {
+          ws = new WebSocket(wsUrl);
+          ws.onopen = (openEvent) => {
+            createReceiveEntry('Connection established');
+            connect.disabled = true;
+            disconnect.disabled = false;
+            messageTxt.disabled = false;
+            sendBtn.disabled = false;
+            console.log(openEvent);
+          }
+          ws.onclose = (closeEvent) => {
+            createReceiveEntry('Disconnected');
+            connect.disabled = false;
+            disconnect.disabled = true;
+            messageTxt.disabled = true;
+            sendBtn.disabled = true;
+            console.log(closeEvent);
+          }
+          ws.onmessage = (messageEvent) => {
+            createReceiveEntry(`Received: ${messageEvent.data}`);
+            console.log(messageEvent);
+          }
+        } catch (err) {
+          console.log('Failed to establish connection to socket', err);
+        }
+      }
+      disconnect.onclick = (e) => {
+        if (ws) {
+          ws.close();
+          ws = null;
+        }
+      }
+      sendBtn.onclick = (e) => {
+        if (!ws || ws.readyState != WebSocket.OPEN) {
+          return;
+        }
+        const msgContent = messageTxt.value;
+        messageTxt.value = '';
+        ws.send(msgContent);
+        messageTxt.focus();
+      }
+
+      const recentReceived = [];
+      function createReceiveEntry(message) {
+        const now = new Date();
+        const nowStr = `${now.getHours()}:${now.getMinutes()}:${now.getSeconds()}`;
+        const msg = {
+          time: now,
+          timeStr: nowStr,
+          message
+        };
+        recentReceived.unshift(msg);
+        if (recentReceived.length > 20) recentReceived = recentReceived.slice(0, 19);
+        writeMsgs();
+      }
+      function writeMsgs() {
+        let html = '';
+        recentReceived.forEach(msg => {
+          html += `<div class="timestamp">${msg.timeStr}</div><div class="message">${msg.message}</div>`;
+        });
+        output.innerHTML = html;
+      }
+    </script>
+  </body>
+</html>
