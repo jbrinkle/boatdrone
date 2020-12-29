@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Google Maps test</title>
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=<key goes here>&callback=initMap&libraries=&v=weekly"
+      defer
+    ></script>
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 5px;
+        box-sizing: border-box;
+      }
+      body {
+        background-color: #555;
+        color: #f2f2f2;
+        font-family:'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+        font-size: 1.5em;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: auto 300px;
+        gap: 10px;
+        height: 100%;
+        width: 100%;
+      }
+      .grid-cell {
+        background-color: #333;
+      }
+      .map-host {
+        height: 100%;
+      }
+      .controls {
+        display: flex;
+        flex-direction: column;
+      }
+    </style>
+    <script>
+      let map;
+      let ship;
+
+      const waypointLabels = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+      let nextWaypointLabelIndex = 0;
+      let waypoints = [];
+
+      function createShipMarker(googleMap) {
+        const image = {
+          url: 'file:///users/jasonbrinkle/devpersonal/boatdrone/client/ship.png',
+          size: new google.maps.Size(512,512),
+          origin: new google.maps.Point(0,0),
+          anchor: new google.maps.Point(10,10),
+          scaledSize: new google.maps.Size(20,20)
+        };
+        ship = new google.maps.Marker({
+          position: { lat: 40.41813648735877, lng: -111.51098623582878 },
+          map: googleMap,
+          icon: image,
+          shape: { coords: [ 1,1, 1,19, 19,19, 19,1 ], type: 'poly' },
+          title: 'Boat1'
+        })
+      }
+
+      function addWaypoint(e) {
+        waypoints.push({
+          visited: false,
+          marker: new google.maps.Marker({
+            position: e.latLng,
+            map: map,
+            label: waypointLabels[nextWaypointLabelIndex++],
+            zIndex: 1
+          })
+        })
+      }
+
+      function initMap() {
+        const mapHost = document.getElementById("map-host");
+        map = new google.maps.Map(mapHost, {
+          center: { lat: 40.44884297450606, lng: -111.48927118783011 },
+          zoom: 12,
+        });
+        map.addListener('click', addWaypoint);
+        createShipMarker(map);
+      }
+    </script>
+  </head>
+  <body>
+    <div class="grid-container">
+      <div class="grid-cell map-host" id="map-host">ABC</div>
+      <div class="grid-cell controls">
+        <button id="clearWaypoints">Clear Waypoints</button>
+        <button id="travel">Travel to Waypoints</button>
+        <button id="pause">Pause travel</button>
+      </div>
+    </div>
+    <script>
+      let locationUpdateInterval;
+      let nextWaypoint;
+      let nextWaypointIndex;
+      const speed = .001;
+
+      document.getElementById('clearWaypoints').addEventListener('click', () => {
+        waypoints.forEach(w => {
+          w.marker.setMap(null);
+        });
+        waypoints = [];
+        nextWaypointLabelIndex = 0;
+        clearInterval(locationUpdateInterval);
+        nextWaypoint = null;
+        nextWaypointIndex = 0;
+      });
+      document.getElementById('travel').addEventListener('click', () => {
+        if (!waypoints.length) {
+          alert('No waypoints!');
+          return;
+        }
+
+        for (let i = 0; i < waypoints.length; i++) {
+          if (!waypoints[i].visited) {
+            nextWaypoint = waypoints[i].marker;
+            nextWaypointIndex = i;
+            break;
+          }
+        }
+
+        setInterval(() => {
+          const curPos = ship.getPosition();
+          const wayPos = nextWaypoint.getPosition();
+          const dist = Math.sqrt( Math.pow(wayPos.lng() - curPos.lng(), 2) + Math.pow(wayPos.lat() - curPos.lat()) );
+          const slope = (wayPos.lat() - curPos.lat()) / (wayPos.lng() - curPos.lng());
+          const yInt = curPos.lat() - slope * curPos.lng();
+
+          if (dist < speed) {
+            // close enough
+          } else {
+            // speed = Math.sqrt( (lng - curPos.lng)2 + (lat - curPos.lat)2 )
+            // lat = slope * lng + yInt
+
+            // speed2 = (lng - curPos.lng)2 + ((slope * lng + yInt) - curPos.lat)2
+          }
+        }, 1000);
+      });
+    </script>
+  </body>
+</html>
